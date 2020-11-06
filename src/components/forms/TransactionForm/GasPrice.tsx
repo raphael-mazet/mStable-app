@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import styled from 'styled-components';
 import { ToggleInput } from '../ToggleInput';
 import { Color } from '../../../theme';
+import { useGasPrices } from '../../../context/TransactionsProvider';
 
 interface Props {
   valid: boolean;
@@ -32,7 +33,7 @@ const ButtonContent = styled.div`
 `;
 
 export const GasPrice: FC<Props> = ({ valid }) => {
-  // const gasPrices = useGasPrices();
+  const gasPrices = useGasPrices();
   return (
     <Container>
       <ButtonContent>
@@ -45,7 +46,12 @@ export const GasPrice: FC<Props> = ({ valid }) => {
         />
         <div>
           <p>STANDARD</p>
-          <p>40 $ 4.20</p>
+          <p>
+            {gasPrices
+              ? Math.round(gasPrices?.gasPriceInfo.standard * 10) / 10
+              : '-'}{' '}
+            $ 4.20
+          </p>
         </div>
       </ButtonContent>
       <ButtonContent>
@@ -58,7 +64,12 @@ export const GasPrice: FC<Props> = ({ valid }) => {
         />
         <div>
           <p>FAST</p>
-          <p>40 $ 4.20</p>
+          <p>
+            {gasPrices
+              ? Math.round(gasPrices?.gasPriceInfo.fast * 10) / 10
+              : '-'}{' '}
+            $ 4.20
+          </p>
         </div>
       </ButtonContent>
       <ButtonContent>
@@ -71,7 +82,12 @@ export const GasPrice: FC<Props> = ({ valid }) => {
         />
         <div>
           <p>INSTANT</p>
-          <p>40 $ 4.20</p>
+          <p>
+            {gasPrices
+              ? Math.round(gasPrices?.gasPriceInfo.instant * 10) / 10
+              : '-'}{' '}
+            $ 4.20
+          </p>
         </div>
       </ButtonContent>
     </Container>
