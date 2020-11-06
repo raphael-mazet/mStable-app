@@ -6,6 +6,7 @@ import React, {
   useContext,
   useMemo,
   useReducer,
+  useEffect,
 } from 'react';
 import { TransactionReceipt, TransactionResponse } from 'ethers/providers';
 import { BigNumber } from 'ethers/utils';
@@ -38,14 +39,26 @@ enum Actions {
   Finalize,
   Reset,
   ResetLatestStatus,
+  FetchGasPrices,
 }
 
 type TransactionHash = string;
+
+interface GasPriceInfo extends Response {
+  health: boolean;
+  block_number: number;
+  block_time: number;
+  slow: number;
+  standard: number;
+  fast: number;
+  instant: number;
+}
 
 interface State {
   current: Record<TransactionHash, Transaction>;
   latestStatus: { status?: TransactionStatus; blockNumber?: number };
   historic: Record<TransactionHash, HistoricTransaction>;
+  gasPriceInfo?: any;
 }
 
 interface Dispatch {
@@ -89,6 +102,8 @@ interface Dispatch {
    * Reset just the `latestStatus.status` field.
    */
   resetLatestStatus(): void;
+
+  fetchGasPrices(): void;
 }
 
 type Action =
@@ -113,7 +128,11 @@ type Action =
       };
     }
   | { type: Actions.Reset }
-  | { type: Actions.ResetLatestStatus };
+  | { type: Actions.ResetLatestStatus }
+  | {
+      type: Actions.FetchGasPrices;
+      payload: { gasPriceInfo: any };
+    };
 
 const transactionsCtxReducer: Reducer<State, Action> = (state, action) => {
   switch (action.type) {
@@ -184,6 +203,11 @@ const transactionsCtxReducer: Reducer<State, Action> = (state, action) => {
           ...state.latestStatus,
           status: undefined,
         },
+      };
+    case Actions.FetchGasPrices:
+      return {
+        ...state,
+        gasPriceInfo: action.payload,
       };
     default:
       throw new Error('Unhandled action');
@@ -445,6 +469,21 @@ export const TransactionsProvider: FC<{}> = ({ children }) => {
   const dataState = useDataState();
   const stakingRewardsContracts = useStakingRewardsContracts();
 
+  const fetchGasPrices = useCallback<Dispatch['fetchGasPrices']>(async () => {
+    try {
+      let gasPrice = await fetch('https://gasprice.poa.network/');
+      gasPrice = await gasPrice.json();
+      dispatch({
+        type: Actions.FetchGasPrices,
+        payload: {
+          gasPriceInfo: gasPrice,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }, [dispatch]);
+
   const addPending = useCallback<Dispatch['addPending']>(
     (manifest, pendingTx) => {
       const purpose = getTxPurpose(
@@ -530,6 +569,7 @@ export const TransactionsProvider: FC<{}> = ({ children }) => {
             finalize,
             reset,
             resetLatestStatus,
+            fetchGasPrices,
           },
         ],
         [
@@ -540,6 +580,7 @@ export const TransactionsProvider: FC<{}> = ({ children }) => {
           finalize,
           reset,
           resetLatestStatus,
+          fetchGasPrices,
         ],
       )}
     >
@@ -555,6 +596,18 @@ export const useTransactionsState = (): State => useTransactionsContext()[0];
 
 export const useTransactionsDispatch = (): Dispatch =>
   useTransactionsContext()[1];
+
+export const useGasPrices = (): GasPriceInfo => {
+  const { fetchGasPrices } = useTransactionsDispatch();
+  useEffect(() => {
+    fetchGasPrices();
+    const interval = setInterval(() => {
+      fetchGasPrices();
+    }, 300000);
+    return () => clearInterval(interval);
+  }, [fetchGasPrices]);
+  return useContext(context)[0].gasPriceInfo;
+};
 
 export const useOrderedCurrentTransactions = (
   formId?: string,
