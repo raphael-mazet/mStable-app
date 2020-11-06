@@ -597,7 +597,7 @@ export const useTransactionsState = (): State => useTransactionsContext()[0];
 export const useTransactionsDispatch = (): Dispatch =>
   useTransactionsContext()[1];
 
-export const useGasPrices = (): GasPriceInfo => {
+export const useGasPrices = (): State => {
   const { fetchGasPrices } = useTransactionsDispatch();
   useEffect(() => {
     fetchGasPrices();
