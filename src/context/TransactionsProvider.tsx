@@ -7,6 +7,8 @@ import React, {
   useMemo,
   useReducer,
 } from 'react';
+import useInterval from 'react-use/lib/useInterval';
+
 import useEffectOnce from 'react-use/lib/useEffectOnce';
 import { TransactionReceipt, TransactionResponse } from 'ethers/providers';
 import { BigNumber } from 'ethers/utils';
@@ -206,6 +208,8 @@ const transactionsCtxReducer: Reducer<State, Action> = (state, action) => {
     }
     case Actions.Reset:
       return {
+        gasPriceInfo: state.gasPriceInfo,
+        ethPrice: state.ethPrice,
         historic: {},
         current: {},
         latestStatus: {},
@@ -529,12 +533,12 @@ export const TransactionsProvider: FC<{}> = ({ children }) => {
   useEffectOnce(() => {
     fetchGasPrices();
     fetchEthPrice();
-    const interval = setInterval(() => {
-      fetchGasPrices();
-      fetchEthPrice();
-    }, 300000);
-    return () => clearInterval(interval);
   });
+
+  useInterval(() => {
+    fetchGasPrices();
+    fetchEthPrice();
+  }, 5 * 60 * 1000);
 
   const addPending = useCallback<Dispatch['addPending']>(
     (manifest, pendingTx) => {

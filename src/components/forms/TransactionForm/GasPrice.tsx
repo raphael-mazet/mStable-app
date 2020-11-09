@@ -3,6 +3,16 @@ import styled from 'styled-components';
 import { ToggleInput } from '../ToggleInput';
 import { Color } from '../../../theme';
 import { useGasPrices } from '../../../context/TransactionsProvider';
+import {
+  useSetGasPrice,
+  useIsStandard,
+  useToggleFast,
+  useToggleStandard,
+  useToggleInstant,
+  useCurrentGasPrice,
+  useIsFast,
+  useIsInstant,
+} from './FormProvider';
 
 interface Props {
   valid: boolean;
@@ -34,13 +44,48 @@ const ButtonContent = styled.div`
 
 export const GasPrice: FC<Props> = ({ valid }) => {
   const gasPrices = useGasPrices();
+  const setGasPrice = useSetGasPrice();
+  const isStandard = useIsStandard();
+  const isFast = useIsFast();
+  const isInstant = useIsInstant();
+  const currentGasPrice = useCurrentGasPrice();
+  const toggleStandard = useToggleStandard();
+  const toggleFast = useToggleFast();
+  const toggleInstant = useToggleInstant();
+
+  const onStandard = (): void => {
+    if (!currentGasPrice || !isStandard) {
+      setGasPrice(gasPrices?.standard as number);
+    } else {
+      setGasPrice(undefined);
+    }
+    toggleStandard();
+  };
+
+  const onFast = (): void => {
+    if (!currentGasPrice || !isFast) {
+      setGasPrice(gasPrices?.fast as number);
+    } else {
+      setGasPrice(undefined);
+    }
+    toggleFast();
+  };
+
+  const onInstant = (): void => {
+    if (!currentGasPrice || !isInstant) {
+      setGasPrice(gasPrices?.instant as number);
+    } else {
+      setGasPrice(undefined);
+    }
+    toggleInstant();
+  };
+
   return (
     <Container>
       <ButtonContent>
         <ToggleInput
-          checked={valid}
-          // eslint-disable-next-line no-console
-          onClick={() => console.log('TODO')}
+          checked={isStandard || valid}
+          onClick={onStandard}
           enabledColor={Color.green}
           disabledColor={Color.greyTransparent}
         />
@@ -53,9 +98,8 @@ export const GasPrice: FC<Props> = ({ valid }) => {
       </ButtonContent>
       <ButtonContent>
         <ToggleInput
-          disabled={!valid}
-          // eslint-disable-next-line no-console
-          onClick={() => console.log('TODO')}
+          checked={isFast}
+          onClick={onFast}
           enabledColor={Color.green}
           disabledColor={Color.greyTransparent}
         />
@@ -68,9 +112,9 @@ export const GasPrice: FC<Props> = ({ valid }) => {
       </ButtonContent>
       <ButtonContent>
         <ToggleInput
-          disabled={!valid}
+          checked={isInstant}
           // eslint-disable-next-line no-console
-          onClick={() => console.log('TODO')}
+          onClick={onInstant}
           enabledColor={Color.green}
           disabledColor={Color.greyTransparent}
         />
