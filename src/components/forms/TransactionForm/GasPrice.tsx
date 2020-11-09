@@ -47,10 +47,7 @@ export const GasPrice: FC<Props> = ({ valid }) => {
         <div>
           <p>STANDARD</p>
           <p>
-            {gasPrices
-              ? Math.round(gasPrices?.gasPriceInfo.standard * 10) / 10
-              : '-'}{' '}
-            $ 4.20
+            {gasPrices ? Math.round(gasPrices?.standard * 10) / 10 : '-'} $ 4.20
           </p>
         </div>
       </ButtonContent>
@@ -65,10 +62,7 @@ export const GasPrice: FC<Props> = ({ valid }) => {
         <div>
           <p>FAST</p>
           <p>
-            {gasPrices
-              ? Math.round(gasPrices?.gasPriceInfo.fast * 10) / 10
-              : '-'}{' '}
-            $ 4.20
+            {gasPrices ? Math.round(gasPrices?.fast * 10) / 10 : '-'} $ 4.20
           </p>
         </div>
       </ButtonContent>
@@ -83,10 +77,7 @@ export const GasPrice: FC<Props> = ({ valid }) => {
         <div>
           <p>INSTANT</p>
           <p>
-            {gasPrices
-              ? Math.round(gasPrices?.gasPriceInfo.instant * 10) / 10
-              : '-'}{' '}
-            $ 4.20
+            {gasPrices ? Math.round(gasPrices?.instant * 10) / 10 : '-'} $ 4.20
           </p>
         </div>
       </ButtonContent>

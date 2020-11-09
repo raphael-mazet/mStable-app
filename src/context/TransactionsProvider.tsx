@@ -6,8 +6,8 @@ import React, {
   useContext,
   useMemo,
   useReducer,
-  useEffect,
 } from 'react';
+import useEffectOnce from 'react-use/lib/useEffectOnce';
 import { TransactionReceipt, TransactionResponse } from 'ethers/providers';
 import { BigNumber } from 'ethers/utils';
 
@@ -40,11 +40,12 @@ enum Actions {
   Reset,
   ResetLatestStatus,
   FetchGasPrices,
+  FetchEthPrice,
 }
 
 type TransactionHash = string;
 
-interface GasPriceInfo extends Response {
+interface GasPriceInfo {
   health: boolean;
   block_number: number;
   block_time: number;
@@ -54,11 +55,18 @@ interface GasPriceInfo extends Response {
   instant: number;
 }
 
+interface EthPrice {
+  ethereum: {
+    usd: number;
+  };
+}
+
 interface State {
   current: Record<TransactionHash, Transaction>;
   latestStatus: { status?: TransactionStatus; blockNumber?: number };
   historic: Record<TransactionHash, HistoricTransaction>;
-  gasPriceInfo?: any;
+  gasPriceInfo?: GasPriceInfo;
+  ethPrice?: number;
 }
 
 interface Dispatch {
@@ -104,6 +112,8 @@ interface Dispatch {
   resetLatestStatus(): void;
 
   fetchGasPrices(): void;
+
+  fetchEthPrice(): void;
 }
 
 type Action =
@@ -131,7 +141,11 @@ type Action =
   | { type: Actions.ResetLatestStatus }
   | {
       type: Actions.FetchGasPrices;
-      payload: { gasPriceInfo: any };
+      payload: { gasPriceInfo: GasPriceInfo };
+    }
+  | {
+      type: Actions.FetchEthPrice;
+      payload: { ethPrice: EthPrice };
     };
 
 const transactionsCtxReducer: Reducer<State, Action> = (state, action) => {
@@ -204,11 +218,21 @@ const transactionsCtxReducer: Reducer<State, Action> = (state, action) => {
           status: undefined,
         },
       };
-    case Actions.FetchGasPrices:
+    case Actions.FetchGasPrices: {
+      const { gasPriceInfo } = action.payload;
       return {
         ...state,
-        gasPriceInfo: action.payload,
+        gasPriceInfo,
       };
+    }
+    case Actions.FetchEthPrice: {
+      const { ethPrice } = action.payload;
+      const { usd } = ethPrice.ethereum;
+      return {
+        ...state,
+        ethPrice: usd,
+      };
+    }
     default:
       throw new Error('Unhandled action');
   }
@@ -471,18 +495,46 @@ export const TransactionsProvider: FC<{}> = ({ children }) => {
 
   const fetchGasPrices = useCallback<Dispatch['fetchGasPrices']>(async () => {
     try {
-      let gasPrice = await fetch('https://gasprice.poa.network/');
-      gasPrice = await gasPrice.json();
+      const response = await fetch('https://gasprice.poa.network/');
+
+      const gasPriceInfo = (await response.json()) as GasPriceInfo;
       dispatch({
         type: Actions.FetchGasPrices,
         payload: {
-          gasPriceInfo: gasPrice,
+          gasPriceInfo,
         },
       });
     } catch (err) {
       console.error(err);
     }
   }, [dispatch]);
+
+  const fetchEthPrice = useCallback<Dispatch['fetchEthPrice']>(async () => {
+    try {
+      const response = await fetch(
+        'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
+      );
+      const ethPrice = await response.json();
+      dispatch({
+        type: Actions.FetchEthPrice,
+        payload: {
+          ethPrice,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  useEffectOnce(() => {
+    fetchGasPrices();
+    fetchEthPrice();
+    const interval = setInterval(() => {
+      fetchGasPrices();
+      fetchEthPrice();
+    }, 300000);
+    return () => clearInterval(interval);
+  });
 
   const addPending = useCallback<Dispatch['addPending']>(
     (manifest, pendingTx) => {
@@ -570,6 +622,7 @@ export const TransactionsProvider: FC<{}> = ({ children }) => {
             reset,
             resetLatestStatus,
             fetchGasPrices,
+            fetchEthPrice,
           },
         ],
         [
@@ -581,6 +634,7 @@ export const TransactionsProvider: FC<{}> = ({ children }) => {
           reset,
           resetLatestStatus,
           fetchGasPrices,
+          fetchEthPrice,
         ],
       )}
     >
@@ -597,16 +651,12 @@ export const useTransactionsState = (): State => useTransactionsContext()[0];
 export const useTransactionsDispatch = (): Dispatch =>
   useTransactionsContext()[1];
 
-export const useGasPrices = (): State => {
-  const { fetchGasPrices } = useTransactionsDispatch();
-  useEffect(() => {
-    fetchGasPrices();
-    const interval = setInterval(() => {
-      fetchGasPrices();
-    }, 300000);
-    return () => clearInterval(interval);
-  }, [fetchGasPrices]);
-  return useContext(context)[0].gasPriceInfo;
+export const useGasPrices = (): GasPriceInfo | undefined => {
+  return useTransactionsState().gasPriceInfo;
+};
+
+export const useEthPrice = (): number | undefined => {
+  return useTransactionsState().ethPrice;
 };
 
 export const useOrderedCurrentTransactions = (
