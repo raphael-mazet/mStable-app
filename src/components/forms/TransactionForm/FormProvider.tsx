@@ -11,15 +11,19 @@ import React, {
 } from 'react';
 import { SendTxManifest } from '../../../types';
 
+export enum GasPriceType {
+  Standard,
+  Fast,
+  Instant,
+  Custom,
+}
+
 interface State<TState> {
   formId: string;
   manifest?: SendTxManifest<never, never>;
   submitting: boolean;
-  gasPrice?: number | undefined;
-  gasType?: string;
-  isStandard?: boolean;
-  isFast?: boolean;
-  isInstant?: boolean;
+  gasPriceValue?: number | undefined;
+  gasPriceType?: GasPriceType;
   isCustom?: boolean;
 }
 
@@ -30,10 +34,7 @@ interface Dispatch<TState> {
   submitStart(): void;
   submitEnd(): void;
   setGasPrice(gasPrice: number | undefined): void;
-  toggleStandard(): void;
-  toggleFast(): void;
-  toggleInstant(): void;
-  toggleCustom(): void;
+  setGasPriceType(gasPriceType: GasPriceType): void;
 }
 
 enum Actions {
@@ -41,6 +42,7 @@ enum Actions {
   SubmitEnd,
   SubmitStart,
   SetGasPrice,
+  SetGasPriceType,
   ToggleStandard,
   ToggleFast,
   ToggleInstant,
@@ -73,6 +75,10 @@ type Action<TState> =
     }
   | {
       type: Actions.ToggleCustom;
+    }
+  | {
+      type: Actions.SetGasPriceType;
+      payload: GasPriceType;
     };
 
 const stateCtx = createContext<State<any>>({} as any);
@@ -92,39 +98,9 @@ const reducer: Reducer<State<any>, Action<any>> = (state, action) => {
     case Actions.SubmitStart:
       return { ...state, submitting: true };
     case Actions.SetGasPrice:
-      return { ...state, gasPrice: action.payload };
-    case Actions.ToggleStandard:
-      return {
-        ...state,
-        isStandard: !state.isStandard,
-        isFast: false,
-        isInstant: false,
-        isCustom: false,
-      };
-    case Actions.ToggleFast:
-      return {
-        ...state,
-        isFast: !state.isFast,
-        isStandard: false,
-        isInstant: false,
-        isCustom: false,
-      };
-    case Actions.ToggleInstant:
-      return {
-        ...state,
-        isInstant: !state.isInstant,
-        isStandard: false,
-        isFast: false,
-        isCustom: false,
-      };
-    case Actions.ToggleCustom:
-      return {
-        ...state,
-        isCustom: !state.isCustom,
-        isStandard: false,
-        isFast: false,
-        isInstant: false,
-      };
+      return { ...state, gasPriceValue: action.payload };
+    case Actions.SetGasPriceType:
+      return { ...state, gasPriceType: action.payload };
     default:
       throw new Error('Unhandled action type');
   }
@@ -161,21 +137,15 @@ export const FormProvider: FC<{ formId: string }> = ({ children, formId }) => {
     [dispatch],
   );
 
-  const toggleStandard = useCallback<Dispatch<never>['toggleStandard']>(() => {
-    dispatch({ type: Actions.ToggleStandard });
-  }, [dispatch]);
-
-  const toggleFast = useCallback<Dispatch<never>['toggleFast']>(() => {
-    dispatch({ type: Actions.ToggleFast });
-  }, [dispatch]);
-
-  const toggleInstant = useCallback<Dispatch<never>['toggleInstant']>(() => {
-    dispatch({ type: Actions.ToggleInstant });
-  }, [dispatch]);
-
-  const toggleCustom = useCallback<Dispatch<never>['toggleCustom']>(() => {
-    dispatch({ type: Actions.ToggleCustom });
-  }, [dispatch]);
+  const setGasPriceType = useCallback<Dispatch<never>['setGasPriceType']>(
+    gasPriceType => {
+      dispatch({
+        type: Actions.SetGasPriceType,
+        payload: gasPriceType,
+      });
+    },
+    [dispatch],
+  );
 
   return (
     <stateCtx.Provider value={state}>
@@ -186,21 +156,9 @@ export const FormProvider: FC<{ formId: string }> = ({ children, formId }) => {
             submitEnd,
             submitStart,
             setGasPrice,
-            toggleStandard,
-            toggleFast,
-            toggleInstant,
-            toggleCustom,
+            setGasPriceType,
           }),
-          [
-            setManifest,
-            submitEnd,
-            submitStart,
-            setGasPrice,
-            toggleStandard,
-            toggleFast,
-            toggleInstant,
-            toggleCustom,
-          ],
+          [setManifest, submitEnd, submitStart, setGasPrice, setGasPriceType],
         )}
       >
         {children}
@@ -221,19 +179,13 @@ export const useManifest = (): State<never>['manifest'] =>
 export const useFormSubmitting = (): State<never>['submitting'] =>
   useStateCtx().submitting;
 
-export const useIsStandard = (): State<never>['isStandard'] =>
-  useStateCtx().isStandard;
+export const useCurrentGasPrice = (): State<never>['gasPriceValue'] =>
+  useStateCtx().gasPriceValue;
 
-export const useIsFast = (): State<never>['isFast'] => useStateCtx().isFast;
-
-export const useIsInstant = (): State<never>['isInstant'] =>
-  useStateCtx().isInstant;
-
+export const useCurrentGasPriceType = (): State<never>['gasPriceType'] =>
+  useStateCtx().gasPriceType;
 export const useIsCustom = (): State<never>['isCustom'] =>
   useStateCtx().isCustom;
-
-export const useCurrentGasPrice = (): State<never>['gasPrice'] =>
-  useStateCtx().gasPrice;
 
 export const useFormId = (): State<never>['formId'] => useStateCtx().formId;
 
@@ -249,14 +201,5 @@ export const useSubmitEnd = (): Dispatch<never>['submitEnd'] =>
 export const useSetGasPrice = (): Dispatch<never>['setGasPrice'] =>
   useDispatchCtx().setGasPrice;
 
-export const useToggleStandard = (): Dispatch<never>['toggleStandard'] =>
-  useDispatchCtx().toggleStandard;
-
-export const useToggleFast = (): Dispatch<never>['toggleFast'] =>
-  useDispatchCtx().toggleFast;
-
-export const useToggleInstant = (): Dispatch<never>['toggleInstant'] =>
-  useDispatchCtx().toggleInstant;
-
-export const useToggleCustom = (): Dispatch<never>['toggleCustom'] =>
-  useDispatchCtx().toggleCustom;
+export const useSetGasPriceType = (): Dispatch<never>['setGasPriceType'] =>
+  useDispatchCtx().setGasPriceType;
