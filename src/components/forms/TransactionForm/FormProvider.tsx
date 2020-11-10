@@ -24,7 +24,6 @@ interface State<TState> {
   submitting: boolean;
   gasPriceValue?: number | undefined;
   gasPriceType?: GasPriceType;
-  isCustom?: boolean;
 }
 
 interface Dispatch<TState> {
@@ -89,18 +88,45 @@ const reducer: Reducer<State<any>, Action<any>> = (state, action) => {
   switch (action.type) {
     case Actions.SetManifest: {
       const manifest = action.payload || undefined;
-      return { ...state, manifest };
+      if (manifest) {
+        return {
+          ...state,
+          manifest: {
+            ...manifest,
+            gasPrice: state.gasPriceValue,
+          },
+        };
+      }
+      return {
+        ...state,
+        manifest,
+      };
     }
-
     case Actions.SubmitEnd:
       return { ...state, submitting: false };
-
     case Actions.SubmitStart:
       return { ...state, submitting: true };
-    case Actions.SetGasPrice:
-      return { ...state, gasPriceValue: action.payload };
+    case Actions.SetGasPrice: {
+      if (state.manifest) {
+        return {
+          ...state,
+          gasPriceValue: action.payload,
+          manifest: {
+            ...state.manifest,
+            gasPrice: action.payload,
+          },
+        };
+      }
+      return {
+        ...state,
+        gasPriceValue: action.payload,
+      };
+    }
     case Actions.SetGasPriceType:
-      return { ...state, gasPriceType: action.payload };
+      return {
+        ...state,
+        gasPriceType: action.payload,
+      };
     default:
       throw new Error('Unhandled action type');
   }
@@ -184,8 +210,6 @@ export const useCurrentGasPrice = (): State<never>['gasPriceValue'] =>
 
 export const useCurrentGasPriceType = (): State<never>['gasPriceType'] =>
   useStateCtx().gasPriceType;
-export const useIsCustom = (): State<never>['isCustom'] =>
-  useStateCtx().isCustom;
 
 export const useFormId = (): State<never>['formId'] => useStateCtx().formId;
 
