@@ -14,6 +14,8 @@ interface Props {
   valid: boolean;
 }
 
+type GasPriceName = 'standard' | 'fast' | 'instant';
+
 const Container = styled.div`
   display: flex;
   justify-content: center;
@@ -101,30 +103,34 @@ const Input = styled.input<{ error?: string | void; disabled?: boolean }>`
   ${({ theme }) => theme.mixins.numeric};
 `;
 
+const gasPriceOptions: {
+  type: GasPriceType;
+  name?: GasPriceName;
+  label: string;
+}[] = [
+  {
+    type: GasPriceType.Standard,
+    name: 'standard',
+    label: 'STANDARD',
+  },
+  {
+    type: GasPriceType.Fast,
+    name: 'fast',
+    label: 'FAST',
+  },
+  {
+    type: GasPriceType.Instant,
+    name: 'instant',
+    label: 'INSTANT',
+  },
+  {
+    type: GasPriceType.Custom,
+    label: 'CUSTOM',
+  },
+];
+
 export const GasPrice: FC<Props> = () => {
   const gasPrices = useGasPrices();
-
-  const GasProps = [
-    {
-      gasPriceType: GasPriceType.Standard,
-      label: 'STANDARD',
-      gasPriceValue: gasPrices?.standard,
-    },
-    {
-      gasPriceType: GasPriceType.Fast,
-      label: 'FAST',
-      gasPriceValue: gasPrices?.fast,
-    },
-    {
-      gasPriceType: GasPriceType.Instant,
-      label: 'INSTANT',
-      gasPriceValue: gasPrices?.instant,
-    },
-    {
-      gasPriceType: GasPriceType.Custom,
-      label: 'CUSTOM',
-    },
-  ];
 
   const setGasPrice = useSetGasPrice();
   const setGasPriceType = useSetGasPriceType();
@@ -146,34 +152,37 @@ export const GasPrice: FC<Props> = () => {
 
   return (
     <Container>
-      {GasProps.map(({ gasPriceType, label, gasPriceValue }) => (
-        <ButtonContent key={gasPriceType}>
-          <ToggleInput
-            checked={gasPriceType === currentGasPriceType}
-            onClick={() => handleClick(gasPriceType, gasPriceValue as number)}
-            enabledColor={Color.green}
-            disabledColor={Color.greyTransparent}
-          />
-          <div>
-            <p>{label}</p>
-            {gasPriceType !== GasPriceType.Custom ? (
-              <PricesContent>
-                <p>{gasPriceValue}</p>
-                <p>$4.20</p>
-              </PricesContent>
-            ) : (
-              <FlexContainer>
-                <Input
-                  disabled={gasPriceType !== currentGasPriceType}
-                  placeholder="10"
-                  onChange={handleChange}
-                />
-                <p>$4.20</p>
-              </FlexContainer>
-            )}
-          </div>
-        </ButtonContent>
-      ))}
+      {gasPriceOptions.map(({ type, label, name }) => {
+        const gasPrice = name && gasPrices ? gasPrices[name] : undefined;
+        return (
+          <ButtonContent key={type}>
+            <ToggleInput
+              checked={type === currentGasPriceType}
+              onClick={() => handleClick(type, gasPrice as number)}
+              enabledColor={Color.green}
+              disabledColor={Color.greyTransparent}
+            />
+            <div>
+              <p>{label}</p>
+              {type !== GasPriceType.Custom ? (
+                <PricesContent>
+                  <p>{gasPrice}</p>
+                  <p>$4.20</p>
+                </PricesContent>
+              ) : (
+                <FlexContainer>
+                  <Input
+                    disabled={type !== currentGasPriceType}
+                    placeholder="10"
+                    onChange={handleChange}
+                  />
+                  <p>$4.20</p>
+                </FlexContainer>
+              )}
+            </div>
+          </ButtonContent>
+        );
+      })}
     </Container>
   );
 };

@@ -22,7 +22,7 @@ interface State<TState> {
   formId: string;
   manifest?: SendTxManifest<never, never>;
   submitting: boolean;
-  gasPriceValue?: number | undefined;
+  gasPriceValue?: number;
   gasPriceType?: GasPriceType;
 }
 
@@ -32,7 +32,7 @@ interface Dispatch<TState> {
   ): void;
   submitStart(): void;
   submitEnd(): void;
-  setGasPrice(gasPrice: number | undefined): void;
+  setGasPrice(gasPrice: number): void;
   setGasPriceType(gasPriceType: GasPriceType): void;
 }
 
@@ -42,10 +42,6 @@ enum Actions {
   SubmitStart,
   SetGasPrice,
   SetGasPriceType,
-  ToggleStandard,
-  ToggleFast,
-  ToggleInstant,
-  ToggleCustom,
 }
 
 type Action<TState> =
@@ -61,19 +57,7 @@ type Action<TState> =
     }
   | {
       type: Actions.SetGasPrice;
-      payload: number | undefined;
-    }
-  | {
-      type: Actions.ToggleStandard;
-    }
-  | {
-      type: Actions.ToggleFast;
-    }
-  | {
-      type: Actions.ToggleInstant;
-    }
-  | {
-      type: Actions.ToggleCustom;
+      payload: number;
     }
   | {
       type: Actions.SetGasPriceType;
@@ -157,7 +141,7 @@ export const FormProvider: FC<{ formId: string }> = ({ children, formId }) => {
     gasPrice => {
       dispatch({
         type: Actions.SetGasPrice,
-        payload: gasPrice || undefined,
+        payload: gasPrice,
       });
     },
     [dispatch],
