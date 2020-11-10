@@ -27,9 +27,6 @@ const Container = styled.div`
   @media (min-width: ${ViewportWidth.m}) {
     flex-direction: row;
     padding-bottom: 16px;
-    div {
-      margin-right: 15px;
-    }
   }
 `;
 
@@ -45,12 +42,25 @@ const ButtonContent = styled.div`
   border-radius: 3px;
   width: 100%;
   margin-bottom: 10px;
+  margin-right: 15px;
   > :first-child {
     padding-right: 10px;
   }
   @media (min-width: ${ViewportWidth.m}) {
-    width: fit-content;
+    width: 200px;
     margin-bottom: 0;
+  }
+`;
+
+const PricesContent = styled.div`
+  display: flex;
+  ${({ theme }) => theme.mixins.numeric};
+  p {
+    margin-right: 10px;
+  }
+  > :last-child {
+    color: grey;
+    opacity: 70%;
   }
 `;
 
@@ -103,9 +113,10 @@ export const GasPrice: FC<Props> = () => {
         />
         <div>
           <p>STANDARD</p>
-          <p>
-            {gasPrices ? Math.round(gasPrices?.standard * 10) / 10 : '-'} $ 4.20
-          </p>
+          <PricesContent>
+            <p>{gasPrices ? Math.round(gasPrices?.standard * 10) / 10 : '-'}</p>
+            <p>$4.20</p>
+          </PricesContent>
         </div>
       </ButtonContent>
       <ButtonContent>
@@ -117,9 +128,10 @@ export const GasPrice: FC<Props> = () => {
         />
         <div>
           <p>FAST</p>
-          <p>
-            {gasPrices ? Math.round(gasPrices?.fast * 10) / 10 : '-'} $ 4.20
-          </p>
+          <PricesContent>
+            <p>{gasPrices ? Math.round(gasPrices?.fast * 10) / 10 : '-'}</p>
+            <p>$4.20</p>
+          </PricesContent>
         </div>
       </ButtonContent>
       <ButtonContent>
@@ -131,9 +143,10 @@ export const GasPrice: FC<Props> = () => {
         />
         <div>
           <p>INSTANT</p>
-          <p>
-            {gasPrices ? Math.round(gasPrices?.instant * 10) / 10 : '-'} $ 4.20
-          </p>
+          <PricesContent>
+            <p>{gasPrices ? Math.round(gasPrices?.instant * 10) / 10 : '-'}</p>
+            <p>$4.20</p>
+          </PricesContent>
         </div>
       </ButtonContent>
     </Container>

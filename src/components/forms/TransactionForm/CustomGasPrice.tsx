@@ -16,6 +16,11 @@ const Container = styled.div`
 
 const FlexContainer = styled.div`
   display: flex;
+  > :last-child {
+    color: grey;
+    opacity: 70%;
+    ${({ theme }) => theme.mixins.numeric};
+  }
 `;
 
 const Content = styled.div`
@@ -33,7 +38,7 @@ const Content = styled.div`
     padding-right: 10px;
   }
   @media (min-width: ${ViewportWidth.m}) {
-    width: fit-content;
+    width: 200px;
   }
 `;
 
@@ -97,7 +102,7 @@ export const CustomGasPrice: FC = () => {
               placeholder="10"
               onChange={handleChange}
             />
-            <p>$ 4.20</p>
+            <p>$4.20</p>
           </FlexContainer>
         </div>
       </Content>
