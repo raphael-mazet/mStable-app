@@ -20,6 +20,7 @@ interface State<TState> {
   isStandard?: boolean;
   isFast?: boolean;
   isInstant?: boolean;
+  isCustom?: boolean;
 }
 
 interface Dispatch<TState> {
@@ -32,6 +33,7 @@ interface Dispatch<TState> {
   toggleStandard(): void;
   toggleFast(): void;
   toggleInstant(): void;
+  toggleCustom(): void;
 }
 
 enum Actions {
@@ -42,6 +44,7 @@ enum Actions {
   ToggleStandard,
   ToggleFast,
   ToggleInstant,
+  ToggleCustom,
 }
 
 type Action<TState> =
@@ -67,6 +70,9 @@ type Action<TState> =
     }
   | {
       type: Actions.ToggleInstant;
+    }
+  | {
+      type: Actions.ToggleCustom;
     };
 
 const stateCtx = createContext<State<any>>({} as any);
@@ -93,6 +99,7 @@ const reducer: Reducer<State<any>, Action<any>> = (state, action) => {
         isStandard: !state.isStandard,
         isFast: false,
         isInstant: false,
+        isCustom: false,
       };
     case Actions.ToggleFast:
       return {
@@ -100,6 +107,7 @@ const reducer: Reducer<State<any>, Action<any>> = (state, action) => {
         isFast: !state.isFast,
         isStandard: false,
         isInstant: false,
+        isCustom: false,
       };
     case Actions.ToggleInstant:
       return {
@@ -107,6 +115,15 @@ const reducer: Reducer<State<any>, Action<any>> = (state, action) => {
         isInstant: !state.isInstant,
         isStandard: false,
         isFast: false,
+        isCustom: false,
+      };
+    case Actions.ToggleCustom:
+      return {
+        ...state,
+        isCustom: !state.isCustom,
+        isStandard: false,
+        isFast: false,
+        isInstant: false,
       };
     default:
       throw new Error('Unhandled action type');
@@ -156,6 +173,10 @@ export const FormProvider: FC<{ formId: string }> = ({ children, formId }) => {
     dispatch({ type: Actions.ToggleInstant });
   }, [dispatch]);
 
+  const toggleCustom = useCallback<Dispatch<never>['toggleCustom']>(() => {
+    dispatch({ type: Actions.ToggleCustom });
+  }, [dispatch]);
+
   return (
     <stateCtx.Provider value={state}>
       <dispatchCtx.Provider
@@ -168,6 +189,7 @@ export const FormProvider: FC<{ formId: string }> = ({ children, formId }) => {
             toggleStandard,
             toggleFast,
             toggleInstant,
+            toggleCustom,
           }),
           [
             setManifest,
@@ -177,6 +199,7 @@ export const FormProvider: FC<{ formId: string }> = ({ children, formId }) => {
             toggleStandard,
             toggleFast,
             toggleInstant,
+            toggleCustom,
           ],
         )}
       >
@@ -206,6 +229,9 @@ export const useIsFast = (): State<never>['isFast'] => useStateCtx().isFast;
 export const useIsInstant = (): State<never>['isInstant'] =>
   useStateCtx().isInstant;
 
+export const useIsCustom = (): State<never>['isCustom'] =>
+  useStateCtx().isCustom;
+
 export const useCurrentGasPrice = (): State<never>['gasPrice'] =>
   useStateCtx().gasPrice;
 
@@ -231,3 +257,6 @@ export const useToggleFast = (): Dispatch<never>['toggleFast'] =>
 
 export const useToggleInstant = (): Dispatch<never>['toggleInstant'] =>
   useDispatchCtx().toggleInstant;
+
+export const useToggleCustom = (): Dispatch<never>['toggleCustom'] =>
+  useDispatchCtx().toggleCustom;

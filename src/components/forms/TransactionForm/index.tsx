@@ -4,6 +4,8 @@ import { InputPane } from './InputPane';
 import { ConfirmPane } from './ConfirmPane';
 import { TransactionsPane } from './TransactionsPane';
 import { GasPrice } from './GasPrice';
+import { CustomGasPrice } from './CustomGasPrice';
+import { ViewportWidth } from '../../../theme';
 
 interface Props {
   className?: string;
@@ -23,6 +25,16 @@ const Container = styled.div<{ compact?: boolean }>`
   }
 `;
 
+const GasPriceContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  @media (min-width: ${ViewportWidth.m}) {
+    flex-direction: row;
+  }
+`;
+
 export const TransactionForm: FC<Props> = ({
   className,
   compact,
@@ -39,7 +51,10 @@ export const TransactionForm: FC<Props> = ({
     </ConfirmPane>
     {compact ? null : (
       <div>
-        <GasPrice valid={valid} />
+        <GasPriceContainer>
+          <GasPrice valid={valid} />
+          <CustomGasPrice />
+        </GasPriceContainer>
         <TransactionsPane transactionsLabel={transactionsLabel} />
       </div>
     )}

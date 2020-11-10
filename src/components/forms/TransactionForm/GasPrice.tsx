@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
 import { ToggleInput } from '../ToggleInput';
-import { Color } from '../../../theme';
+import { Color, ViewportWidth } from '../../../theme';
 import { useGasPrices } from '../../../context/TransactionsProvider';
 import {
   useSetGasPrice,
@@ -20,10 +20,17 @@ interface Props {
 
 const Container = styled.div`
   display: flex;
-  div {
-    margin-right: 15px;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+
+  @media (min-width: ${ViewportWidth.m}) {
+    flex-direction: row;
+    padding-bottom: 16px;
+    div {
+      margin-right: 15px;
+    }
   }
-  padding-bottom: 16px;
 `;
 
 const ButtonContent = styled.div`
@@ -36,13 +43,18 @@ const ButtonContent = styled.div`
   padding: 8px 16px;
   border: 1px rgba(0, 0, 0, 0.2) solid;
   border-radius: 3px;
-  width: fit-content;
+  width: 100%;
+  margin-bottom: 10px;
   > :first-child {
     padding-right: 10px;
   }
+  @media (min-width: ${ViewportWidth.m}) {
+    width: fit-content;
+    margin-bottom: 0;
+  }
 `;
 
-export const GasPrice: FC<Props> = ({ valid }) => {
+export const GasPrice: FC<Props> = () => {
   const gasPrices = useGasPrices();
   const setGasPrice = useSetGasPrice();
   const isStandard = useIsStandard();
@@ -84,7 +96,7 @@ export const GasPrice: FC<Props> = ({ valid }) => {
     <Container>
       <ButtonContent>
         <ToggleInput
-          checked={isStandard || valid}
+          checked={isStandard}
           onClick={onStandard}
           enabledColor={Color.green}
           disabledColor={Color.greyTransparent}
@@ -113,7 +125,6 @@ export const GasPrice: FC<Props> = ({ valid }) => {
       <ButtonContent>
         <ToggleInput
           checked={isInstant}
-          // eslint-disable-next-line no-console
           onClick={onInstant}
           enabledColor={Color.green}
           disabledColor={Color.greyTransparent}
