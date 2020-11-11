@@ -95,6 +95,7 @@ export interface SendTxManifest<
     >
   >;
   gasPrice?: number;
+  gasLimit?: BigNumber;
   formId?: string;
   onSent?(): void;
   onFinalized?(): void;

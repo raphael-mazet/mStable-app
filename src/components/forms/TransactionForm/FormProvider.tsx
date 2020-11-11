@@ -9,7 +9,11 @@ import React, {
   useMemo,
   useReducer,
 } from 'react';
+import useThrottleFn from 'react-use/lib/useThrottleFn';
+import { BigNumber } from 'ethers/utils';
+import { ethers } from 'ethers';
 import { SendTxManifest } from '../../../types';
+import { calculateGasMargin } from '../../../web3/hooks';
 
 export enum GasPriceType {
   Standard,
@@ -42,6 +46,7 @@ enum Actions {
   SubmitStart,
   SetGasPrice,
   SetGasPriceType,
+  SetGasLimit,
 }
 
 type Action<TState> =
@@ -62,6 +67,10 @@ type Action<TState> =
   | {
       type: Actions.SetGasPriceType;
       payload: GasPriceType;
+    }
+  | {
+      type: Actions.SetGasLimit;
+      payload?: BigNumber;
     };
 
 const stateCtx = createContext<State<any>>({} as any);
@@ -111,6 +120,18 @@ const reducer: Reducer<State<any>, Action<any>> = (state, action) => {
         ...state,
         gasPriceType: action.payload,
       };
+    case Actions.SetGasLimit: {
+      if (state.manifest) {
+        return {
+          ...state,
+          manifest: {
+            ...state.manifest,
+            gasLimit: action.payload,
+          },
+        };
+      }
+      return state;
+    }
     default:
       throw new Error('Unhandled action type');
   }
@@ -121,6 +142,31 @@ export const FormProvider: FC<{ formId: string }> = ({ children, formId }) => {
     submitting: false,
     formId,
   });
+
+  const { args, fn, iface } = state.manifest || {};
+
+  useThrottleFn<
+    Promise<void>,
+    [unknown[] | undefined, string | undefined, ethers.Contract | undefined]
+  >(
+    async (_args, _fn, _iface) => {
+      let gasLimit;
+      if (_args && _fn && _iface) {
+        try {
+          gasLimit = (await _iface.estimate[_fn](..._args)) as BigNumber;
+          gasLimit = calculateGasMargin(gasLimit);
+        } catch {
+          // ignore
+        }
+      }
+      dispatch({
+        type: Actions.SetGasLimit,
+        payload: gasLimit,
+      });
+    },
+    5000,
+    [args, fn, iface],
+  );
 
   const setManifest = useCallback<Dispatch<never>['setManifest']>(
     manifest => {

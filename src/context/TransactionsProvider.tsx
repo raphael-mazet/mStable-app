@@ -33,6 +33,7 @@ import { getEtherscanLink } from '../web3/strings';
 import { BigDecimal } from '../web3/BigDecimal';
 import { useStakingRewardsContracts } from './earn/EarnDataProvider';
 import { StakingRewardsContractsMap } from './earn/types';
+import { calculateGasMargin } from '../web3/hooks';
 
 enum Actions {
   AddPending,
@@ -719,12 +720,6 @@ export const useHasPendingApproval = (
 
 const overrideProps = ['nonce', 'gasLimit', 'gasPrice', 'value', 'chainId'];
 
-export const calculateGasMargin = (value: BigNumber): BigNumber => {
-  const GAS_MARGIN = new BigNumber(1000);
-  const offset = value.mul(GAS_MARGIN).div(new BigNumber(10000));
-  return value.add(offset);
-};
-
 const isTransactionOverrides = (arg: unknown): boolean =>
   arg != null &&
   typeof arg === 'object' &&
@@ -735,7 +730,7 @@ const addGasSettings = async (
   manifest: SendTxManifest<any, any>,
 ): Promise<typeof manifest> => {
   const { iface, fn, args } = manifest;
-  let { gasPrice } = manifest;
+  let { gasPrice, gasLimit } = manifest;
   const last = args[args.length - 1];
 
   if (
@@ -747,7 +742,10 @@ const addGasSettings = async (
   }
 
   // Set the gas limit (with the calculated gas margin)
-  const gasLimit = await iface.estimate[fn](...args);
+  if (!gasLimit) {
+    gasLimit = (await iface.estimate[fn](...args)) as BigNumber;
+    gasLimit = calculateGasMargin(gasLimit);
+  }
 
   // Also set the gas price, because some providers don't
   if (!gasPrice) {
@@ -756,7 +754,7 @@ const addGasSettings = async (
 
   return {
     ...manifest,
-    args: [...args, { gasLimit: calculateGasMargin(gasLimit), gasPrice }],
+    args: [...args, { gasLimit, gasPrice }],
   };
 };
 

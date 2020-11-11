@@ -2,12 +2,16 @@ import React, { FC, ChangeEventHandler, useCallback } from 'react';
 import styled from 'styled-components';
 import { ToggleInput } from '../ToggleInput';
 import { Color, ViewportWidth } from '../../../theme';
-import { useGasPrices } from '../../../context/TransactionsProvider';
+import {
+  useGasPrices,
+  useEthPrice,
+} from '../../../context/TransactionsProvider';
 import {
   GasPriceType,
   useCurrentGasPriceType,
   useSetGasPriceType,
   useSetGasPrice,
+  useManifest,
 } from './FormProvider';
 
 interface Props {
@@ -131,13 +135,14 @@ const gasPriceOptions: {
 
 export const GasPrice: FC<Props> = () => {
   const gasPrices = useGasPrices();
-
+  const ethPrice = useEthPrice();
+  const manifest = useManifest();
   const setGasPrice = useSetGasPrice();
   const setGasPriceType = useSetGasPriceType();
   const currentGasPriceType = useCurrentGasPriceType();
   const handleChange = useCallback<ChangeEventHandler<HTMLInputElement>>(
     event => {
-      setGasPrice(parseInt(event.target.value, 10));
+      setGasPrice(parseInt(event.target.value, 10) * 1e9);
     },
     [setGasPrice],
   );
@@ -154,11 +159,15 @@ export const GasPrice: FC<Props> = () => {
     <Container>
       {gasPriceOptions.map(({ type, label, name }) => {
         const gasPrice = name && gasPrices ? gasPrices[name] : undefined;
+        const transactionFee =
+          gasPrice && ethPrice && manifest?.gasLimit
+            ? gasPrice * (ethPrice / 1e9) * manifest.gasLimit.toNumber()
+            : undefined;
         return (
           <ButtonContent key={type}>
             <ToggleInput
               checked={type === currentGasPriceType}
-              onClick={() => handleClick(type, gasPrice as number)}
+              onClick={() => handleClick(type, (gasPrice as number) * 1e9)}
               enabledColor={Color.green}
               disabledColor={Color.greyTransparent}
             />
@@ -167,7 +176,7 @@ export const GasPrice: FC<Props> = () => {
               {type !== GasPriceType.Custom ? (
                 <PricesContent>
                   <p>{gasPrice}</p>
-                  <p>$4.20</p>
+                  <p>${transactionFee}</p>
                 </PricesContent>
               ) : (
                 <FlexContainer>
@@ -176,7 +185,7 @@ export const GasPrice: FC<Props> = () => {
                     placeholder="10"
                     onChange={handleChange}
                   />
-                  <p>$4.20</p>
+                  <p>${transactionFee}</p>
                 </FlexContainer>
               )}
             </div>
