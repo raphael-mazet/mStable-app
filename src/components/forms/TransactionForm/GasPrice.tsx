@@ -176,7 +176,7 @@ export const GasPrice: FC<Props> = () => {
               {type !== GasPriceType.Custom ? (
                 <PricesContent>
                   <p>{gasPrice}</p>
-                  <p>${transactionFee}</p>
+                  <p>${transactionFee?.toFixed(2)}</p>
                 </PricesContent>
               ) : (
                 <FlexContainer>
@@ -185,7 +185,7 @@ export const GasPrice: FC<Props> = () => {
                     placeholder="10"
                     onChange={handleChange}
                   />
-                  <p>${transactionFee}</p>
+                  <p>${transactionFee?.toFixed(2)}</p>
                 </FlexContainer>
               )}
             </div>
