@@ -735,6 +735,7 @@ const addGasSettings = async (
   manifest: SendTxManifest<any, any>,
 ): Promise<typeof manifest> => {
   const { iface, fn, args } = manifest;
+  let { gasPrice } = manifest;
   const last = args[args.length - 1];
 
   if (
@@ -749,7 +750,9 @@ const addGasSettings = async (
   const gasLimit = await iface.estimate[fn](...args);
 
   // Also set the gas price, because some providers don't
-  const gasPrice = await iface.provider.getGasPrice();
+  if (!gasPrice) {
+    gasPrice = await iface.provider.getGasPrice();
+  }
 
   return {
     ...manifest,
